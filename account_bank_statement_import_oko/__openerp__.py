@@ -7,12 +7,9 @@
     'description': """OKO Bank simple bank statement in csv format""",
     'data': [
          'account_bank_statement_import_oko_view.xml',
-    #    'account_bank_statement_import_view.xml',
-    #    'account_import_tip_data.xml',
-    #    'wizard/journal_creation.xml',
     ],
     'demo': [
     ],
     'installable': True,
-    'auto_install': True,
+    'auto_install': False,
 }
