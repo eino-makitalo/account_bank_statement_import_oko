@@ -71,18 +71,24 @@ class AccountBankStatementImport(models.TransientModel):
                     mindate=accdate
                 if accdate>maxdate:
                     maxdate=accdate
+
+                #Mikulta
+                # The last part is just the bank identifier
+                identifier = transaccount_and_bic.rfind(' ')
+                acc_num=transaccount_and_bic[:identifier]
+                
+                
                 transactions.append(
                     {
+                    'sequence': linenum, # added for sequence?
                     'name':other_part,
                     'date':accdate,
                     'amount': amountEUR,
-                    'unique_import_id':archiveid,
-                    'account_number':transaccount_and_bic,
+                    'unique_import_id':archiveid+"-"+accdate,
+                    'account_number':acc_num,
                     'note':memo,
                     'partner_name':other_part,
                     'ref':referencecode,
-                    'transtype':transtype,
-                    'transdescr':transdescr
                 }                    
                 )
             else:
