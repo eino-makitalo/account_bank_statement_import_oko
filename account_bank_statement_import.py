@@ -92,7 +92,7 @@ class AccountBankStatementImport(models.TransientModel):
         journal_obj = self.env['account.journal']
         journal = journal_obj.browse(self.env.context.get('journal_id', []))
         account=journal.bank_account_id.sanitized_acc_number        
-        xname=_("OKO ")+mindate+" - "+maxdate
-        return ("EUR",account,[{'name':xname,'date':maxdate,'transactions':transactions},])
+        #xname=_("OKO ")+mindate+" - "+maxdate
+        return ("EUR",account,[{'date':maxdate,'transactions':transactions},])
         
     
