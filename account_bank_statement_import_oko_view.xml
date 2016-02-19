@@ -8,6 +8,13 @@
             <xpath expr='//ul[@id="statement_format"]' position='inside'>
                 <li>OKO Finland CSV format </li>
             </xpath>
+            <xpath expr='//ul[@id="statement_format"]' position='after'>
+                <label for="balance_start"/>
+                <field name="balance_start"/>
+
+                <label for="bank_statement_date"/>
+                <field name="bank_statement_date"/>
+            </xpath>
         </field>
     </record>
 

@@ -5,6 +5,8 @@ import base64
 from openerp import api, fields, models, _
 from openerp.exceptions import UserError
 from openerp.addons.base.res.res_bank import sanitize_account_number
+from decimal import Decimal
+import openerp.addons.decimal_precision as dp
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -16,6 +18,19 @@ class AccountBankStatementImport(models.TransientModel):
     _description = 'Import Bank Statement CSV format OKO Finland'
 
     #data_file = fields.Binary(string='Bank Statement File', required=True, help='Get you bank statements in electronic format from your bank and select them here.')
+    balance_start = fields.Float(
+        'Starting Balance',
+        digits_compute=dp.get_precision('Account')
+    )
+
+    bank_statement_date = fields.Date(
+        'Bank Statement Date',
+        help="You can choose to manually set the bank statement date here. "
+             "Otherwise the bank statement date will be read from the latest "
+             "bank statement line date ",
+    )
+
+
 
     OKO_START_ROW="Kirjauspäivä;Arvopäivä;Määrä EUROA;Laji;Selitys;Saaja/Maksaja;Saajan tilinumero ja pankin BIC;Viite;Viesti;Arkistointitunnus".decode("utf-8").encode("iso8859-1")
     def __check_oko(self,data_file):        
@@ -52,7 +67,7 @@ class AccountBankStatementImport(models.TransientModel):
         transactions=[]
         mindate="9999-99-99"
         maxdate="0000-00-00"
-        
+        total_amt = Decimal(0) 
         header_skipped=False
         linenum=1
         for row in data_file.split("\n"):
@@ -76,10 +91,11 @@ class AccountBankStatementImport(models.TransientModel):
                 # The last part is just the bank identifier
                 identifier = transaccount_and_bic.rfind(' ')
                 acc_num=transaccount_and_bic[:identifier]
-                
-                
-                transactions.append(
-                    {
+                if len(memo.strip())==0:
+                    memo='-'
+                if len(other_part.strip())==0:
+                    other_part=''
+                oneval={
                     'sequence': linenum, # added for sequence?
                     'name':other_part,
                     'date':accdate,
@@ -89,16 +105,25 @@ class AccountBankStatementImport(models.TransientModel):
                     'note':memo,
                     'partner_name':other_part,
                     'ref':referencecode,
-                }                    
-                )
+                }
+                transactions.append(oneval)
+                
+                total_amt = total_amt + Decimal(amountEUR)
+                linenum=linenum+1  # advance sequence                
             else:
                 header_skipped=True
-            linenum=linenum+1
         # OKO csv does not include account number so we get it from journal
         journal_obj = self.env['account.journal']
         journal = journal_obj.browse(self.env.context.get('journal_id', []))
+        balance_end=Decimal(self.balance_start)+total_amt
+        
         account=journal.bank_account_id.sanitized_acc_number        
-        #xname=_("OKO ")+mindate+" - "+maxdate
-        return ("EUR",account,[{'date':maxdate,'transactions':transactions},])
+        vals_bank_statement = {
+            'balance_start': self.balance_start,
+            'balance_end_real': balance_end,
+            'date': self.bank_statement_date if self.bank_statement_date else maxdate,
+            'transactions': transactions
+        }        
+        return ("EUR",account,[vals_bank_statement,])
         
     
