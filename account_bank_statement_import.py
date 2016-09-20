@@ -8,6 +8,7 @@ from openerp.addons.base.res.res_bank import sanitize_account_number
 from decimal import Decimal
 import openerp.addons.decimal_precision as dp
 import hashlib
+import sys
 
 import logging
 _logger = logging.getLogger(__name__)
