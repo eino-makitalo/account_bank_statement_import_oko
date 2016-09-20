@@ -7,6 +7,8 @@ from openerp.exceptions import UserError
 from openerp.addons.base.res.res_bank import sanitize_account_number
 from decimal import Decimal
 import openerp.addons.decimal_precision as dp
+import hashlib
+import sys
 
 import logging
 _logger = logging.getLogger(__name__)
@@ -64,6 +66,7 @@ class AccountBankStatementImport(models.TransientModel):
         if not self.__check_oko(data_file):
             return super(AccountBankStatementImport, self)._parse_file(data_file)            
         
+        
         transactions=[]
         mindate="9999-99-99"
         maxdate="0000-00-00"
@@ -95,12 +98,18 @@ class AccountBankStatementImport(models.TransientModel):
                     memo='-'
                 if len(other_part.strip())==0:
                     other_part=''
+                hashMD5 = hashlib.md5()  #known security issues with md5 but simple enough to provide uniqueness for OKO bank archiveid duplicates
+                if sys.version_info.major>2:
+                    hashMD5.update(bytes(row),"iso8859-15")
+                else:
+                    hashMD5.update(row)
+                extra_uniqueness= hashMD5.hexdigest()
                 oneval={
                     'sequence': linenum, # added for sequence?
                     'name':other_part,
                     'date':accdate,
                     'amount': amountEUR,
-                    'unique_import_id':archiveid+"-"+accdate,
+                    'unique_import_id':archiveid+"-"+extra_uniqueness,
                     'account_number':acc_num,
                     'note':memo,
                     'partner_name':other_part,
